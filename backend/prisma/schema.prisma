@@ -9,3 +9,185 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+// -----------------------------------------------------------------------------
+// Enums
+// -----------------------------------------------------------------------------
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum BookingType {
+  FLIGHT
+  HOTEL
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum CancellationStatus {
+  REQUESTED
+  APPROVED
+  REJECTED
+  PROCESSED
+}
+
+// -----------------------------------------------------------------------------
+// Models
+// -----------------------------------------------------------------------------
+
+model User {
+  id              String   @id @default(uuid())
+  name            String
+  email           String   @unique
+  passwordHash    String?
+  googleId        String?  @unique
+  phone           String?
+  role            Role     @default(USER)
+  isActive        Boolean  @default(true)
+  isEmailVerified Boolean  @default(false)
+  isPhoneVerified Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  bookings      Booking[]
+  notifications Notification[]
+
+  @@index([email])
+}
+
+model Booking {
+  id               String        @id @default(uuid())
+  userId           String
+  bookingReference String        @unique
+  type             BookingType
+  status           BookingStatus @default(PENDING)
+  totalAmount      Decimal       @db.Decimal(10, 2)
+  currency         String        @default("USD")
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  user          User           @relation(fields: [userId], references: [id])
+  flightBooking FlightBooking?
+  hotelBooking  HotelBooking?
+  passengers    Passenger[]
+  payments      Payment[]
+  cancellations Cancellation[]
+
+  @@index([userId])
+  @@index([bookingReference])
+  @@index([status])
+}
+
+model FlightBooking {
+  id                String   @id @default(uuid())
+  bookingId         String   @unique
+  provider          String?
+  externalBookingId String?
+  flightNumber      String
+  departureLocation String
+  arrivalLocation   String
+  departureTime     DateTime
+  arrivalTime       DateTime
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([externalBookingId])
+}
+
+model HotelBooking {
+  id                String   @id @default(uuid())
+  bookingId         String   @unique
+  provider          String?
+  externalBookingId String?
+  hotelName         String
+  roomType          String
+  checkIn           DateTime
+  checkOut          DateTime
+  guests            Int
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([externalBookingId])
+}
+
+model Passenger {
+  id             String    @id @default(uuid())
+  bookingId      String
+  firstName      String
+  lastName       String
+  dateOfBirth    DateTime?
+  gender         String?
+  passportNumber String?
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+}
+
+model Payment {
+  id              String        @id @default(uuid())
+  bookingId       String
+  paymentProvider String?
+  transactionId   String?       @unique
+  amount          Decimal       @db.Decimal(10, 2)
+  currency        String        @default("USD")
+  status          PaymentStatus @default(PENDING)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([transactionId])
+}
+
+model Cancellation {
+  id           String             @id @default(uuid())
+  bookingId    String
+  reason       String?
+  status       CancellationStatus @default(REQUESTED)
+  refundAmount Decimal            @default(0) @db.Decimal(10, 2)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  type      String
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model OtpChallenge {
+  id          String    @id @default(uuid())
+  identifier  String
+  purpose     String
+  otpHash     String
+  expiresAt   DateTime
+  attempts    Int       @default(0)
+  maxAttempts Int       @default(3)
+  consumedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([identifier])
+}

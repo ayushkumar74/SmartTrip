@@ -9,8 +9,20 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   PORT: z.string().default('5000'),
   DATABASE_URL: z.string().url('DATABASE_URL must be a valid URL'),
-  // Future API keys and secrets should be added here
-  // JWT_SECRET: z.string().min(10),
+  
+  // JWT Auth
+  JWT_SECRET: z.string().min(10, 'JWT_SECRET must be at least 10 characters'),
+  JWT_EXPIRES_IN: z.string().default('7d'),
+
+  // Google OAuth (Optional in dev to avoid crashing, but usually string)
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
+  GOOGLE_CALLBACK_URL: z.string().url().optional(),
+
+  // OTP Configuration
+  OTP_PROVIDER: z.enum(['dev', 'twilio']).default('dev'),
+  OTP_PROVIDER_API_KEY: z.string().optional(),
+  OTP_PROVIDER_SENDER_ID: z.string().optional(),
 });
 
 // Validate environment variables

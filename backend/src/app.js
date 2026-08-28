@@ -2,9 +2,11 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import cookieParser from 'cookie-parser';
 
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import healthRoutes from './modules/health/health.route.js';
+import authRoutes from './modules/auth/auth.route.js';
 
 const app = express();
 
@@ -30,12 +32,13 @@ app.use('/api', limiter);
 // Built-in middleware for parsing JSON and urlencoded payloads
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 // --- Routes ---
 app.use('/api/v1/health', healthRoutes);
+app.use('/api/v1/auth', authRoutes);
 
 // Stub routes for other modules (To be implemented later)
-// app.use('/api/v1/auth', authRoutes);
 // app.use('/api/v1/users', userRoutes);
 // app.use('/api/v1/flights', flightRoutes);
 // app.use('/api/v1/hotels', hotelRoutes);
