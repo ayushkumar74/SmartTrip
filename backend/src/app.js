@@ -7,6 +7,9 @@ import cookieParser from 'cookie-parser';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import healthRoutes from './modules/health/health.route.js';
 import authRoutes from './modules/auth/auth.route.js';
+import flightRoutes from './modules/flights/flights.route.js';
+import bookingRoutes from './modules/bookings/bookings.route.js';
+import notificationRoutes from './modules/notifications/notifications.route.js';
 
 const app = express();
 
@@ -14,8 +17,9 @@ const app = express();
 app.use(helmet());
 
 // CORS config (allow frontend to access API)
+const allowedOrigins = process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : '*';
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || '*', // Adjust in production
+  origin: allowedOrigins,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   credentials: true
 }));
@@ -34,18 +38,28 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+// Basic Request Logging Middleware
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    console.log(`[${req.method}] ${req.originalUrl} - ${res.statusCode} (${duration}ms)`);
+  });
+  next();
+});
+
 // --- Routes ---
 app.use('/api/v1/health', healthRoutes);
 app.use('/api/v1/auth', authRoutes);
 
 // Stub routes for other modules (To be implemented later)
 // app.use('/api/v1/users', userRoutes);
-// app.use('/api/v1/flights', flightRoutes);
+app.use('/api/v1/flights', flightRoutes);
 // app.use('/api/v1/hotels', hotelRoutes);
-// app.use('/api/v1/bookings', bookingRoutes);
+app.use('/api/v1/bookings', bookingRoutes);
 // app.use('/api/v1/payments', paymentRoutes);
 // app.use('/api/v1/cancellations', cancellationRoutes);
-// app.use('/api/v1/notifications', notificationRoutes);
+app.use('/api/v1/notifications', notificationRoutes);
 // app.use('/api/v1/admin', adminRoutes);
 // app.use('/api/v1/external', externalRoutes);
 // app.use('/api/v1/data-science', dataScienceRoutes);
