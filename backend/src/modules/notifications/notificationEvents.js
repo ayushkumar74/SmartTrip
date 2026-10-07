@@ -1,0 +1,66 @@
+export const NOTIFICATION_CATEGORIES = {
+  BOOKING: 'BOOKING',
+  PAYMENT: 'PAYMENT',
+  TRIP: 'TRIP',
+  GENERAL: 'GENERAL',
+};
+
+export const NOTIFICATION_TYPES = {
+  BOOKING_CREATED: 'BOOKING_CREATED',
+  BOOKING_CANCELLED: 'BOOKING_CANCELLED',
+  PAYMENT_COMPLETED: 'PAYMENT_COMPLETED',
+  PAYMENT_FAILED: 'PAYMENT_FAILED',
+  REFUND_COMPLETED: 'REFUND_COMPLETED',
+  TRIP_SAVED: 'TRIP_SAVED',
+  TRIP_UPDATED: 'TRIP_UPDATED',
+};
+
+export const NOTIFICATION_EVENT_CONFIG = {
+  [NOTIFICATION_TYPES.BOOKING_CREATED]: {
+    category: NOTIFICATION_CATEGORIES.BOOKING,
+    title: 'Booking Initiated',
+  },
+  [NOTIFICATION_TYPES.BOOKING_CANCELLED]: {
+    category: NOTIFICATION_CATEGORIES.BOOKING,
+    title: 'Booking Cancelled',
+  },
+  [NOTIFICATION_TYPES.PAYMENT_COMPLETED]: {
+    category: NOTIFICATION_CATEGORIES.PAYMENT,
+    title: 'Payment Successful',
+  },
+  [NOTIFICATION_TYPES.PAYMENT_FAILED]: {
+    category: NOTIFICATION_CATEGORIES.PAYMENT,
+    title: 'Payment Failed',
+  },
+  [NOTIFICATION_TYPES.REFUND_COMPLETED]: {
+    category: NOTIFICATION_CATEGORIES.PAYMENT,
+    title: 'Refund Completed',
+  },
+  [NOTIFICATION_TYPES.TRIP_SAVED]: {
+    category: NOTIFICATION_CATEGORIES.TRIP,
+    title: 'Trip Saved',
+  },
+  [NOTIFICATION_TYPES.TRIP_UPDATED]: {
+    category: NOTIFICATION_CATEGORIES.TRIP,
+    title: 'Trip Updated',
+  },
+};
+
+export const getNotificationCategory = (type) => NOTIFICATION_EVENT_CONFIG[type]?.category || NOTIFICATION_CATEGORIES.GENERAL;
+
+export const getNotificationPreferenceKey = (type) => {
+  switch (type) {
+    case NOTIFICATION_TYPES.BOOKING_CREATED:
+    case NOTIFICATION_TYPES.BOOKING_CANCELLED:
+      return 'bookingNotifications';
+    case NOTIFICATION_TYPES.PAYMENT_COMPLETED:
+    case NOTIFICATION_TYPES.PAYMENT_FAILED:
+    case NOTIFICATION_TYPES.REFUND_COMPLETED:
+      return 'paymentNotifications';
+    case NOTIFICATION_TYPES.TRIP_SAVED:
+    case NOTIFICATION_TYPES.TRIP_UPDATED:
+      return 'tripNotifications';
+    default:
+      return null;
+  }
+};

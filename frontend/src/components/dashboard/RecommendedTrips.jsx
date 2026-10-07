@@ -1,77 +1,96 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { RECOMMENDED_TRIPS } from '../../mock/travelData';
-import { MapPin, ArrowRight, Flame } from 'lucide-react';
+import { MapPin, ArrowRight, Calendar } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
 
+function ImgWithFallback({ src, alt, className }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) {
+    return <div className={`${className} bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center`}>
+      <MapPin className="w-8 h-8 text-blue-300" />
+    </div>;
+  }
+  return <img src={src} alt={alt} className={className} onError={() => setFailed(true)} />;
+}
+
 export default function RecommendedTrips() {
- const { formatCurrency } = useSettings();
- const navigate = useNavigate();
- 
+  const { formatCurrency } = useSettings();
+  const navigate = useNavigate();
+
   return (
     <section>
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-2">
-          <Flame className="h-6 w-6 text-red-500" />
-          <h2 className="text-2xl font-black text-primary tracking-tight">Trending Destinations</h2>
+      {/* Section header */}
+      <div className="flex items-end justify-between mb-6">
+        <div>
+          <p className="text-xs font-semibold text-brand-600 uppercase tracking-widest mb-1">Top Picks</p>
+          <h2 className="text-2xl font-bold text-gray-900">Trending Destinations</h2>
         </div>
-        <button className="text-sm font-bold text-accent hover:text-accent/90 flex items-center gap-1 group">
-          See All <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+        <button
+          onClick={() => navigate('/explore')}
+          className="text-sm font-semibold text-brand-600 hover:text-brand-700 flex items-center gap-1 group shrink-0"
+        >
+          View all <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
         </button>
       </div>
 
- {/* Horizontal Scroll Layout for variety */}
- <div className="flex overflow-x-auto pb-6 -mx-4 px-4 sm:mx-0 sm:px-0 gap-4 md:gap-6 snap-x hide-scrollbar">
- {RECOMMENDED_TRIPS.map(trip => (
- <div key={trip.id} onClick={() => navigate(`/explore?search=${encodeURIComponent(trip.destination)}`)} className="min-w-[280px] w-[280px] md:min-w-[320px] md:w-[320px] shrink-0 snap-start group cursor-pointer relative rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300">
- <div className="h-48 overflow-hidden relative">
- <img 
- src={trip.imageUrl} 
- alt={trip.destination} 
- className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-in-out"
- />
- <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
- <div className="absolute bottom-4 left-4 right-4 flex justify-between items-end">
- <div>
- <h3 className="text-xl font-black text-white leading-tight">{trip.destination}</h3>
- <div className="flex items-center text-[10px] text-white/90 font-bold tracking-widest uppercase mt-1">
- <MapPin className="w-3 h-3 mr-1" /> {trip.country}
- </div>
- </div>
- </div>
- </div>
- 
-          <div className="bg-surface p-5 border border-t-0 border-theme-border rounded-b-2xl flex flex-col h-[140px]">
-            <p className="text-sm font-medium text-secondary line-clamp-2 mb-3 leading-relaxed">
-              {trip.description}
-            </p>
-            
-            <div className="mt-auto flex justify-between items-center border-t border-theme-border pt-3">
-              <div>
-                <div className="text-[10px] font-bold text-muted uppercase tracking-widest">Starting from</div>
-                <div className="text-lg font-black text-primary leading-none mt-0.5">
-                  {formatCurrency(parseInt(trip.budget.replace('$', '').replace(',', '')))}
+      {/* Horizontal scroll — hidden scrollbar */}
+      <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide -mx-1 px-1">
+        {RECOMMENDED_TRIPS.map(trip => (
+          <div
+            key={trip.id}
+            onClick={() => navigate(`/explore?search=${encodeURIComponent(trip.destination)}`)}
+            className="min-w-[220px] w-[220px] shrink-0 cursor-pointer group rounded-xl overflow-hidden bg-white border border-gray-200 hover:shadow-md hover:border-gray-300 transition-all duration-200"
+          >
+            {/* Image */}
+            <div className="relative overflow-hidden h-36">
+              <ImgWithFallback
+                src={trip.imageUrl}
+                alt={trip.destination}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              />
+              {/* Country badge */}
+              <span className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm text-gray-700 text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full border border-white/50">
+                {trip.country}
+              </span>
+            </div>
+
+            {/* Card body */}
+            <div className="p-3">
+              <h3 className="font-bold text-gray-900 text-sm group-hover:text-brand-600 transition-colors">
+                {trip.destination}
+              </h3>
+              <p className="text-xs text-gray-500 mt-0.5 line-clamp-2 leading-relaxed">{trip.description}</p>
+
+              <div className="mt-3 pt-2.5 border-t border-gray-100 flex items-center justify-between">
+                <div>
+                  <div className="text-[10px] text-gray-400 font-medium">From</div>
+                  <div className="text-sm font-bold text-gray-900">
+                    {formatCurrency(parseInt(String(trip.budget).replace(/[^0-9]/g, ''), 10) || 25000, 'INR')}
+                  </div>
                 </div>
-              </div>
-              <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center group-hover:bg-accent transition-colors">
-                <ArrowRight className="w-4 h-4 text-accent group-hover:text-white" />
+                <div className="flex items-center gap-0.5 text-[10px] text-gray-400 font-medium">
+                  <Calendar className="w-3 h-3" />
+                  {trip.bestTime || 'Year round'}
+                </div>
               </div>
             </div>
           </div>
- </div>
- ))}
- </div>
- 
- {/* Add some global CSS to hide the scrollbar for this specific component if needed */}
- <style dangerouslySetInnerHTML={{__html: `
- .hide-scrollbar::-webkit-scrollbar {
- display: none;
- }
- .hide-scrollbar {
- -ms-overflow-style: none;
- scrollbar-width: none;
- }
- `}} />
- </section>
- );
+        ))}
+      </div>
+
+      {/* Tags row */}
+      <div className="flex flex-wrap gap-2 mt-4">
+        {['Mountains', 'Beach', 'Adventure', 'Cultural', 'Luxury', 'Romantic', 'Nature'].map(tag => (
+          <button
+            key={tag}
+            onClick={() => navigate(`/explore?category=${tag}`)}
+            className="px-3 py-1 text-xs font-semibold rounded-full bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-colors"
+          >
+            {tag}
+          </button>
+        ))}
+      </div>
+    </section>
+  );
 }

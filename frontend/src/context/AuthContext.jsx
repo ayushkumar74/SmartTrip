@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { authService } from '../services/auth.service';
 
 const AuthContext = createContext();
@@ -40,15 +40,24 @@ export const AuthProvider = ({ children }) => {
  return response;
  };
 
+ const refreshUser = useCallback(async () => {
+  try {
+   const response = await authService.getCurrentUser();
+   setUser(response.data.user);
+  } catch {
+   // silent
+  }
+ }, []);
+
  const logout = async () => {
- await authService.logout();
- setUser(null);
+  await authService.logout();
+  setUser(null);
  };
 
  return (
- <AuthContext.Provider value={{ user, loading, login, loginWithGoogle, loginWithOtp, logout }}>
- {children}
- </AuthContext.Provider>
+  <AuthContext.Provider value={{ user, loading, login, loginWithGoogle, loginWithOtp, logout, refreshUser }}>
+   {children}
+  </AuthContext.Provider>
  );
 };
 

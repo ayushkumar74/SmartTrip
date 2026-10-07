@@ -144,13 +144,13 @@ const Autocomplete = forwardRef(({ label, error, value, onChange, placeholder, c
  return (
  <div className="w-full relative" ref={containerRef}>
  {label && variant === 'default' && (
- <label className="block text-sm font-medium text-text-primary mb-1">
+ <label className="block text-sm font-medium text-primary mb-1">
  {label}
  </label>
  )}
  <div className="relative">
  {variant === 'travel' && label && (
- <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1 px-1">
+ <label className="block text-xs font-bold text-muted uppercase tracking-wider mb-1 px-1">
  {label}
  </label>
  )}
@@ -159,11 +159,11 @@ const Autocomplete = forwardRef(({ label, error, value, onChange, placeholder, c
  type="text"
  className={
  variant === 'travel' 
- ? `appearance-none block w-full px-1 py-1 bg-transparent text-text-primary font-bold text-base md:text-lg placeholder:text-text-muted focus:outline-none transition-colors truncate ${className}`
+ ? `appearance-none block w-full px-1 py-1 bg-transparent text-primary font-bold text-base md:text-lg placeholder:text-muted focus:outline-none transition-colors truncate ${className}`
  : `appearance-none block w-full px-3 py-2 border rounded-md shadow-sm transition-colors sm:text-sm
- bg-surface-input text-text-primary border-border placeholder:text-text-muted 
+ bg-surface-input text-primary border-theme-border placeholder:text-muted 
  focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary
- disabled:bg-page disabled:text-text-muted disabled:border-border disabled:cursor-not-allowed
+ disabled:bg-page disabled:text-muted disabled:border-theme-border disabled:cursor-not-allowed
  ${error ? 'border-danger text-danger focus:ring-danger focus:border-danger ' : ''} 
  ${className}`
  }
@@ -176,15 +176,15 @@ const Autocomplete = forwardRef(({ label, error, value, onChange, placeholder, c
  {...props}
  />
  {variant === 'travel' && selectedOption && !isOpen && (
- <div className="absolute left-1 -bottom-4 text-xs font-semibold text-text-muted truncate max-w-full pointer-events-none">
+ <div className="absolute left-1 -bottom-4 text-xs font-semibold text-muted truncate max-w-full pointer-events-none">
  {selectedOption.subtitle}
  </div>
  )}
  
  {(isOpen && (options.length > 0 || loading)) && (
- <div className="absolute z-[100] w-full mt-2 bg-surface-elevated border border-border rounded-xl shadow-2xl max-h-80 overflow-y-auto">
+ <div className="absolute z-[100] w-full mt-2 bg-elevated border border-theme-border rounded-xl shadow-2xl max-h-80 overflow-y-auto">
  {loading ? (
- <div className="px-4 py-8 flex justify-center items-center text-text-muted">
+ <div className="px-4 py-8 flex justify-center items-center text-muted">
  <Loader2 className="w-5 h-5 animate-spin mr-2" />
  <span className="text-sm">Searching...</span>
  </div>
@@ -205,17 +205,17 @@ const Autocomplete = forwardRef(({ label, error, value, onChange, placeholder, c
  }`}
  >
  <div className="flex items-start gap-3 w-full">
- <Icon className={`h-5 w-5 mt-1 transition-colors shrink-0 ${activeIndex === index ? 'text-primary' : 'text-text-muted group-hover:text-primary'}`} />
+ <Icon className={`h-5 w-5 mt-1 transition-colors shrink-0 ${activeIndex === index ? 'text-primary' : 'text-muted group-hover:text-primary'}`} />
  <div className="flex-1 min-w-0">
  <div className="flex justify-between items-center mb-0.5">
- <span className="font-bold text-text-primary truncate pr-2">{option.title}</span>
+ <span className="font-bold text-primary truncate pr-2">{option.title}</span>
  {option.code && (
- <span className="text-xs font-bold text-text-secondary bg-page px-2 py-1 rounded-md shrink-0">
+ <span className="text-xs font-bold text-secondary bg-page px-2 py-1 rounded-md shrink-0">
  {option.code}
  </span>
  )}
  </div>
- <div className="text-sm text-text-muted truncate">
+ <div className="text-sm text-muted truncate">
  {option.subtitle}
  </div>
  </div>

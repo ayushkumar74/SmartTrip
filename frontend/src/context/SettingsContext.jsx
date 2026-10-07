@@ -3,27 +3,17 @@ import { translations } from '../utils/i18n';
 
 const SettingsContext = createContext();
 
-const CURRENCY_RATES = {
- USD: 1,
- INR: 83.5, // Mock rate for fallback
- EUR: 0.92 // Mock rate for fallback
-};
-
-const CURRENCY_SYMBOLS = {
- USD: '$',
- INR: '₹',
- EUR: '€'
-};
-
 export function SettingsProvider({ children }) {
  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
  const [language, setLanguage] = useState(() => localStorage.getItem('language') || 'en');
  const [currency, setCurrency] = useState(() => localStorage.getItem('currency') || 'INR');
+ const [country, setCountry] = useState(() => localStorage.getItem('country') || 'India');
 
  useEffect(() => {
  localStorage.setItem('theme', theme);
  localStorage.setItem('language', language);
  localStorage.setItem('currency', currency);
+ localStorage.setItem('country', country);
 
  // Apply theme
  const root = window.document.documentElement;
@@ -35,21 +25,29 @@ export function SettingsProvider({ children }) {
  } else {
  root.classList.add(theme);
  }
- }, [theme, language, currency]);
+ }, [theme, language, currency, country]);
 
  // Translation function
  const t = (key) => {
  return translations[language]?.[key] || translations['en']?.[key] || key;
  };
 
- // Centralized currency formatting. All DB prices are in USD.
- const formatCurrency = (usdAmount) => {
- const rate = CURRENCY_RATES[currency] || 1;
- const symbol = CURRENCY_SYMBOLS[currency] || '$';
- const converted = (usdAmount * rate).toFixed(2);
- // Add comma separators
- return `${symbol}${Number(converted).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+ const formatMoney = (amount, currencyCode = 'USD') => {
+  const code = String(currencyCode || 'USD').toUpperCase();
+  const numericAmount = Number(amount);
+  const value = Number.isFinite(numericAmount) ? numericAmount : 0;
+  const formatted = new Intl.NumberFormat(undefined, {
+   style: 'currency',
+   currency: code,
+    currencyDisplay: code === 'INR' ? 'symbol' : 'code',
+   minimumFractionDigits: 2,
+   maximumFractionDigits: 2,
+  }).format(value);
+  return formatted;
  };
+
+ // Keep live-provider currencies authoritative; catalog providers return INR.
+ const formatCurrency = (amount, currencyCode = 'USD') => formatMoney(amount, currencyCode);
 
  const value = {
  theme,
@@ -58,8 +56,11 @@ export function SettingsProvider({ children }) {
  setLanguage,
  currency,
  setCurrency,
+ country,
+ setCountry,
  t,
- formatCurrency
+ formatCurrency,
+ formatMoney
  };
 
  return (

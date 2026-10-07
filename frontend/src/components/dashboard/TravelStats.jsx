@@ -39,7 +39,7 @@ export default function TravelStats() {
  ];
 
  return (
- <div className="mt-12 py-8 px-6 bg-surface rounded-3xl border border-border">
+ <div className="mt-12 py-8 px-6 bg-surface rounded-3xl border border-theme-border">
  <div className="flex flex-col md:flex-row justify-around items-center gap-8">
  {stats.map((stat, idx) => (
  <div key={idx} className="flex flex-col items-center text-center group cursor-default">
@@ -47,9 +47,9 @@ export default function TravelStats() {
  <stat.icon className="h-6 w-6" />
  </div>
  <div className="flex items-baseline gap-1">
- <span className="text-4xl font-extrabold font-heading text-text-primary tracking-tight">{stat.value}</span>
+ <span className="text-4xl font-extrabold font-heading text-primary tracking-tight">{stat.value}</span>
  </div>
- <p className="text-[11px] font-bold text-text-muted uppercase tracking-widest mt-1">{stat.label}</p>
+ <p className="text-[11px] font-bold text-muted uppercase tracking-widest mt-1">{stat.label}</p>
  </div>
  ))}
  </div>

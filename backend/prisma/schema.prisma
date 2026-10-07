@@ -22,6 +22,7 @@ enum Role {
 enum BookingType {
   FLIGHT
   HOTEL
+  PACKAGE
 }
 
 enum BookingStatus {
@@ -45,7 +46,7 @@ enum CancellationStatus {
 }
 
 // -----------------------------------------------------------------------------
-// Models
+// Auth & User Models (EXISTING - DO NOT MODIFY RELATIONS)
 // -----------------------------------------------------------------------------
 
 model User {
@@ -62,8 +63,12 @@ model User {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  bookings      Booking[]
-  notifications Notification[]
+  bookings        Booking[]
+  notifications   Notification[]
+  wishlists       Wishlist[]
+  trips           Trip[]
+  preferences     UserPreference?
+  searchHistory   SearchHistory[]
 
   @@index([email])
 }
@@ -82,6 +87,7 @@ model Booking {
   user          User           @relation(fields: [userId], references: [id])
   flightBooking FlightBooking?
   hotelBooking  HotelBooking?
+  packageBooking PackageBooking?
   passengers    Passenger[]
   payments      Payment[]
   cancellations Cancellation[]
@@ -101,10 +107,19 @@ model FlightBooking {
   arrivalLocation   String
   departureTime     DateTime
   arrivalTime       DateTime
+  seat              String?
+  extraBaggageKg    Int?
+  meal              String?
+  addOnsTotal       Decimal  @default(0) @db.Decimal(10, 2)
+  smartTripTicketId String?  @unique
+  flightOfferId     String?
+  fareClass         String?
 
   booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  flightOffer FlightOffer? @relation(fields: [flightOfferId], references: [id], onDelete: SetNull)
 
   @@index([externalBookingId])
+  @@index([flightOfferId])
 }
 
 model HotelBooking {
@@ -117,20 +132,52 @@ model HotelBooking {
   checkIn           DateTime
   checkOut          DateTime
   guests            Int
+  specialRequest    String?
+  hotelImageUrl     String?
+  roomAmenities     String[] @default([])
+  mealPlan          String?
+  cancellationPolicy String?
+  roomId            String?
+  hotelId           String?
 
   booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  room    Room?   @relation(fields: [roomId], references: [id], onDelete: SetNull)
+  hotel   Hotel?  @relation(fields: [hotelId], references: [id], onDelete: SetNull)
 
   @@index([externalBookingId])
+}
+
+model PackageBooking {
+  id                String   @id @default(uuid())
+  bookingId         String   @unique
+  packageId         String
+  packageName       String
+  destination       String
+  durationDays      Int
+  travelDate        DateTime?
+  travelers         Int
+  packageImageUrl   String?
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  package HolidayPackage @relation(fields: [packageId], references: [id])
 }
 
 model Passenger {
   id             String    @id @default(uuid())
   bookingId      String
+  title          String?
   firstName      String
+  middleName     String?
   lastName       String
   dateOfBirth    DateTime?
   gender         String?
+  nationality    String?
+  email          String?
+  mobile         String?
   passportNumber String?
+  passportExpiry DateTime?
+  passportIssuingCountry String?
+  frequentFlyerNumber String?
 
   booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 }
@@ -140,6 +187,11 @@ model Payment {
   bookingId       String
   paymentProvider String?
   transactionId   String?       @unique
+  razorpayOrderId String?       @unique
+  razorpayPaymentId String?     @unique
+  razorpayRefundId String?      @unique
+  refundStatus    String?
+  refundError     String?
   amount          Decimal       @db.Decimal(10, 2)
   currency        String        @default("USD")
   status          PaymentStatus @default(PENDING)
@@ -161,20 +213,30 @@ model Cancellation {
   updatedAt    DateTime           @updatedAt
 
   booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@unique([bookingId])
 }
 
 model Notification {
-  id        String   @id @default(uuid())
+  id        String    @id @default(uuid())
   userId    String
   type      String
+  category  String    @default("GENERAL")
   title     String
   message   String
-  isRead    Boolean  @default(false)
-  createdAt DateTime @default(now())
+  entityId  String?
+  actionUrl String?
+  metadata  Json?
+  isRead    Boolean   @default(false)
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([userId, isRead])
+  @@index([type])
+  @@index([category])
 }
 
 model OtpChallenge {
@@ -190,4 +252,340 @@ model OtpChallenge {
   updatedAt   DateTime  @updatedAt
 
   @@index([identifier])
+}
+
+// -----------------------------------------------------------------------------
+// Phase 2A: Master Data Models
+// -----------------------------------------------------------------------------
+
+/// Airport master data — sourced from OurAirports open dataset.
+/// Unique constraints on iataCode and icaoCode allow safe upserts.
+model Airport {
+  id          String  @id @default(uuid())
+  iataCode    String  @unique
+  icaoCode    String? @unique
+  name        String
+  city        String
+  country     String
+  countryCode String
+  latitude    Float?
+  longitude   Float?
+  elevation   Int?
+  type        String  @default("large_airport") // large_airport | medium_airport | small_airport | heliport | seaplane_base
+
+  createdAt DateTime @default(now())
+
+  @@index([iataCode])
+  @@index([icaoCode])
+  @@index([city])
+  @@index([country])
+}
+
+/// Airline master data for catalog purposes.
+model Airline {
+  id       String  @id @default(uuid())
+  iataCode String  @unique
+  icaoCode String?
+  name     String
+  country  String?
+  logoUrl  String?
+  active   Boolean @default(true)
+
+  flightOffers FlightOffer[]
+
+  createdAt DateTime @default(now())
+
+  @@index([iataCode])
+}
+
+/// Development/demo flight offer catalog — NOT live inventory.
+/// Real live offers will come from Duffel in Phase 2B.
+model FlightOffer {
+  id               String   @id @default(uuid())
+  airlineId        String
+  flightNumber     String
+  departureIata    String
+  arrivalIata      String
+  departureTime    DateTime
+  arrivalTime      DateTime
+  durationMinutes  Int
+  stops            Int      @default(0)
+  cabinClass       String   @default("ECONOMY")
+  availableSeats   Int
+  priceINR         Decimal  @db.Decimal(12, 2)
+  baggageAllowance String?
+  cabinBaggageKg   Int      @default(7)
+  cabinBaggagePieces Int    @default(1)
+  checkInBaggageKg Int      @default(15)
+  checkInBaggagePieces Int  @default(1)
+  active           Boolean  @default(true)
+
+  airline Airline @relation(fields: [airlineId], references: [id])
+  flightBookings FlightBooking[]
+
+  createdAt DateTime @default(now())
+
+  @@index([departureIata, arrivalIata])
+  @@index([airlineId])
+}
+
+/// Destination catalog — structured records for SmartTrip destinations.
+model Destination {
+  id          String   @id @default(uuid())
+  name        String
+  country     String
+  countryCode String?
+  description String?
+  latitude    Float?
+  longitude   Float?
+  imageUrl    String?
+  region      String?
+  bestTime    String?
+  budgetINR   Decimal? @db.Decimal(12, 2)
+  themes      String[] // e.g. ["Beach", "Nature", "Adventure"]
+
+  attractions Attraction[]
+  wishlists   Wishlist[]   @relation("WishlistDestination")
+  trips       Trip[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([name, country])
+  @@index([country])
+}
+
+/// Attraction records linked to destinations.
+model Attraction {
+  id            String   @id @default(uuid())
+  destinationId String
+  name          String
+  category      String // Museum | Beach | Temple | Park | Restaurant | etc.
+  description   String?
+  imageUrl      String?
+  latitude      Float?
+  longitude     Float?
+  entryFeeINR   Decimal? @db.Decimal(12, 2)
+  rating        Float?
+
+  destination    Destination    @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+  tripActivities TripActivity[]
+
+  createdAt DateTime @default(now())
+
+  @@index([destinationId])
+  @@index([category])
+}
+
+/// Hotel catalog for development/demo — NOT live Booking.com inventory.
+model Hotel {
+  id           String   @id @default(uuid())
+  name         String
+  city         String
+  country      String
+  address      String?
+  latitude     Float?
+  longitude    Float?
+  starRating   Float    @default(4.0)
+  reviewScore  Float    @default(8.0)
+  reviewCount  Int      @default(0)
+  imageUrl     String?
+  amenities    String[] // e.g. ["Free WiFi", "Pool", "Spa"]
+  description  String?
+  tag          String? // e.g. "Bestseller", "Heritage"
+  distanceInfo String?
+  highlight    String?
+  active       Boolean  @default(true)
+
+  rooms          Room[]
+  wishlists      Wishlist[]     @relation("WishlistHotel")
+  tripActivities TripActivity[]
+  hotelBookings  HotelBooking[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([city])
+  @@index([country])
+  @@unique([name, city])
+}
+
+/// Room types linked to hotels.
+model Room {
+  id               String   @id @default(uuid())
+  hotelId          String
+  name             String
+  description      String?
+  maxGuests        Int      @default(2)
+  pricePerNightINR Decimal  @db.Decimal(12, 2)
+  cancellation     String?
+  available        Boolean  @default(true)
+  amenities        String[]
+
+  hotel         Hotel          @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  hotelBookings HotelBooking[]
+
+  @@index([hotelId])
+}
+
+/// SmartTrip-owned holiday packages.
+model HolidayPackage {
+  id           String   @id @default(uuid())
+  name         String
+  destination  String
+  country      String
+  durationDays Int
+  priceINR     Decimal  @db.Decimal(12, 2)
+  imageUrl     String?
+  description  String?
+  highlights   String[]
+  inclusions   String[]
+  exclusions   String[]
+  tag          String? // e.g. "Best Seller", "Trending"
+  rating       Float    @default(4.5)
+  reviewCount  Int      @default(0)
+  active       Boolean  @default(true)
+
+  itinerary HolidayPackageDay[]
+  wishlists Wishlist[]          @relation("WishlistPackage")
+  bookings  PackageBooking[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([destination])
+  @@index([country])
+}
+
+/// Day-by-day itinerary for holiday packages.
+model HolidayPackageDay {
+  id          String   @id @default(uuid())
+  packageId   String
+  dayNumber   Int
+  title       String
+  description String?
+  activities  String[]
+
+  package HolidayPackage @relation(fields: [packageId], references: [id], onDelete: Cascade)
+
+  @@unique([packageId, dayNumber])
+  @@index([packageId])
+}
+
+/// User wishlist — typed nullable FKs per supported entity type.
+model Wishlist {
+  id            String   @id @default(uuid())
+  userId        String
+  destinationId String?
+  hotelId       String?
+  packageId     String?
+  notes         String?
+  createdAt     DateTime @default(now())
+
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  destination Destination?    @relation("WishlistDestination", fields: [destinationId], references: [id], onDelete: SetNull)
+  hotel       Hotel?          @relation("WishlistHotel", fields: [hotelId], references: [id], onDelete: SetNull)
+  package     HolidayPackage? @relation("WishlistPackage", fields: [packageId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, destinationId])
+  @@unique([userId, hotelId])
+  @@unique([userId, packageId])
+  @@index([userId])
+}
+
+// -----------------------------------------------------------------------------
+// User Trip / Itinerary Storage
+// -----------------------------------------------------------------------------
+
+/// A user-created trip plan. Optionally linked to a Destination for context.
+model Trip {
+  id            String       @id @default(uuid())
+  userId        String
+  title         String
+  destinationId String?
+  startDate     DateTime?
+  endDate       DateTime?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  destination Destination? @relation(fields: [destinationId], references: [id], onDelete: SetNull)
+  days        TripDay[]
+
+  @@index([userId])
+}
+
+/// A single day in a Trip.
+model TripDay {
+  id        String        @id @default(uuid())
+  tripId    String
+  dayNumber Int
+  date      DateTime?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  trip       Trip           @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  activities TripActivity[]
+
+  @@unique([tripId, dayNumber])
+  @@index([tripId])
+}
+
+/// An activity item in a TripDay. Supports both linked master-data entities
+/// and fully custom user-created activities.
+model TripActivity {
+  id           String    @id @default(uuid())
+  tripDayId    String
+  title        String
+  description  String?
+  activityType String    // e.g. "Flight", "Hotel", "Attraction", "Custom"
+  startTime    DateTime?
+  endTime      DateTime?
+  sortOrder    Int       @default(0)
+
+  // Optional links to master data — both nullable to allow custom activities
+  attractionId String?
+  hotelId      String?
+
+  tripDay    TripDay     @relation(fields: [tripDayId], references: [id], onDelete: Cascade)
+  attraction Attraction? @relation(fields: [attractionId], references: [id], onDelete: SetNull)
+  hotel      Hotel?      @relation(fields: [hotelId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tripDayId])
+}
+
+// -----------------------------------------------------------------------------
+// DS Foundation Models (Minimal — application-oriented, not ML training data)
+// -----------------------------------------------------------------------------
+
+/// Stores user travel preferences for personalisation and future DS integration.
+model UserPreference {
+  id                     String   @id @default(uuid())
+  userId                 String   @unique
+  travelStyles           String[] // e.g. ["Beach", "Adventure", "Luxury"]
+  budgetLevel            String?  // e.g. "Budget", "Mid-range", "Luxury"
+  bookingNotifications   Boolean  @default(true)
+  paymentNotifications   Boolean  @default(true)
+  tripNotifications      Boolean  @default(true)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+/// Records user search events for future DS personalisation and analytics.
+model SearchHistory {
+  id         String   @id @default(uuid())
+  userId     String
+  searchType String   // e.g. "flight", "hotel", "destination"
+  query      String   // JSON-encoded search params
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([searchType])
 }

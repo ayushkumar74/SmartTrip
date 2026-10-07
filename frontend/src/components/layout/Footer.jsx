@@ -1,85 +1,135 @@
 import React from 'react';
-import { Plane, Mail, Phone } from 'lucide-react';
+import { Plane, Mail, Phone, Share2, Camera, Link2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useSettings } from '../../context/SettingsContext';
 
 export default function Footer() {
- const { t } = useSettings();
-
   return (
-    <footer className="bg-elevated border-t border-theme-border pt-6 pb-4 mt-auto">
-      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 lg:gap-6 mb-6">
-          
-          <div className="col-span-2 md:col-span-3 lg:col-span-1 flex flex-col gap-2">
-            <Link to="/dashboard" className="flex items-center gap-1.5 group inline-flex mb-1">
-              <div className="bg-accent p-1 rounded group-hover:bg-accent/90 transition-colors shadow-sm">
+    <footer className="bg-white border-t border-gray-200 mt-auto">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
+
+          {/* Brand */}
+          <div className="col-span-2 md:col-span-1">
+            <Link to="/dashboard" className="inline-flex items-center gap-1.5 group mb-3">
+              <div className="bg-brand-600 p-1 rounded-md group-hover:bg-brand-700 transition-colors">
                 <Plane className="h-3.5 w-3.5 text-white" />
               </div>
-              <span className="text-lg font-black tracking-tight text-primary font-heading">
-                Smart<span className="text-accent">Trip</span>
+              <span className="text-base font-black tracking-tight text-gray-900">
+                Smart<span className="text-brand-600">Trip</span>
               </span>
             </Link>
-            <p className="text-secondary text-[11px] leading-snug max-w-[180px] font-medium">
-              Discover incredible destinations, plan your itinerary, and book your next adventure seamlessly.
+            <p className="text-xs text-gray-500 leading-relaxed max-w-[180px]">
+              Plan, book and explore the world with confidence.
             </p>
+            <div className="flex gap-3 mt-4">
+              <a href="#" className="text-gray-400 hover:text-brand-600 transition-colors" aria-label="Twitter">
+                <Share2 className="w-4 h-4" />
+              </a>
+              <a href="#" className="text-gray-400 hover:text-brand-600 transition-colors" aria-label="Instagram">
+                <Camera className="w-4 h-4" />
+              </a>
+              <a href="#" className="text-gray-400 hover:text-brand-600 transition-colors" aria-label="LinkedIn">
+                <Link2 className="w-4 h-4" />
+              </a>
+            </div>
           </div>
 
+          {/* Travel */}
           <div>
-            <h4 className="font-black text-primary text-[11px] uppercase tracking-wider mb-2">Company</h4>
-            <ul className="space-y-1">
-              <li><Link to="/about" className="text-secondary hover:text-accent text-[11px] font-bold transition-colors">About Us</Link></li>
-              <li><Link to="/careers" className="text-secondary hover:text-accent text-[11px] font-bold transition-colors">Careers</Link></li>
-              <li><Link to="/press" className="text-secondary hover:text-accent text-[11px] font-bold transition-colors">Press</Link></li>
-              <li><Link to="/investors" className="text-secondary hover:text-accent text-[11px] font-bold transition-colors">Investor Relations</Link></li>
+            <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider mb-3">Travel</h4>
+            <ul className="space-y-2">
+              {[
+                { to: '/flights', label: 'Flights' },
+                { to: '/hotels', label: 'Hotels' },
+                { to: '/packages', label: 'Holiday Packages' },
+                { to: '/explore', label: 'Explore' },
+                { to: '/plan', label: 'Plan a Trip' },
+              ].map(l => (
+                <li key={l.to}>
+                  <Link to={l.to} className="text-xs text-gray-500 hover:text-brand-600 transition-colors font-medium">
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
+          {/* Company */}
           <div>
-            <h4 className="font-black text-primary text-[11px] uppercase tracking-wider mb-2">Travel</h4>
-            <ul className="space-y-1">
-              <li><Link to="/flights" className="text-secondary hover:text-accent text-[11px] font-bold transition-colors">{t('nav.flights') || 'Flights'}</Link></li>
-              <li><Link to="/hotels" className="text-secondary hover:text-accent text-[11px] font-bold transition-colors">{t('nav.hotels') || 'Hotels'}</Link></li>
-              <li><Link to="/packages" className="text-secondary hover:text-accent text-[11px] font-bold transition-colors">Holiday Packages</Link></li>
-              <li><Link to="/explore" className="text-secondary hover:text-accent text-[11px] font-bold transition-colors">{t('nav.explore') || 'Explore'}</Link></li>
+            <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider mb-3">Company</h4>
+            <ul className="space-y-2">
+              {[
+                { to: '/about', label: 'About Us' },
+                { to: '/careers', label: 'Careers' },
+                { to: '/press', label: 'Press' },
+                { to: '/investor-relations', label: 'Investors' },
+              ].map(l => (
+                <li key={l.to}>
+                  <Link to={l.to} className="text-xs text-gray-500 hover:text-brand-600 transition-colors font-medium">
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
+          {/* Support */}
           <div>
-            <h4 className="font-black text-primary text-[11px] uppercase tracking-wider mb-2">Support</h4>
-            <ul className="space-y-1">
-              <li><Link to="/my-trips" className="text-secondary hover:text-accent text-[11px] font-bold transition-colors">Manage Bookings</Link></li>
-              <li><Link to="/support" className="text-secondary hover:text-accent text-[11px] font-bold transition-colors">Help Center</Link></li>
-              <li><Link to="/support/cancellations" className="text-secondary hover:text-accent text-[11px] font-bold transition-colors">Cancellation Policy</Link></li>
+            <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider mb-3">Support</h4>
+            <ul className="space-y-2">
+              {[
+                { to: '/help-center', label: 'Help Center' },
+                { to: '/manage-bookings', label: 'Manage Bookings' },
+                { to: '/cancellation-policy', label: 'Cancellations' },
+                { to: '/my-trips', label: 'My Trips' },
+              ].map(l => (
+                <li key={l.to}>
+                  <Link to={l.to} className="text-xs text-gray-500 hover:text-brand-600 transition-colors font-medium">
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
+          {/* Contact */}
           <div>
-            <h4 className="font-black text-primary text-[11px] uppercase tracking-wider mb-2">Contact</h4>
-            <ul className="space-y-1.5">
-              <li><Link to="/privacy" className="text-secondary hover:text-accent text-[11px] font-bold transition-colors">Privacy Policy</Link></li>
-              <li><Link to="/terms" className="text-secondary hover:text-accent text-[11px] font-bold transition-colors">Terms of Service</Link></li>
-              <li className="flex items-center gap-1.5 text-secondary text-[11px] font-bold pt-0.5">
-                <Phone className="h-3 w-3 shrink-0 text-muted" />
-                <span>+91 1800-SMART</span>
+            <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider mb-3">Contact</h4>
+            <ul className="space-y-2">
+              <li>
+                <a href="tel:+911800SMART" className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-brand-600 transition-colors font-medium">
+                  <Phone className="w-3 h-3 shrink-0" /> +91 1800-SMART
+                </a>
               </li>
-              <li className="flex items-center gap-1.5 text-secondary text-[11px] font-bold">
-                <Mail className="h-3 w-3 shrink-0 text-muted" />
-                <span>support@smarttrip.com</span>
+              <li>
+                <a href="mailto:support@smarttrip.com" className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-brand-600 transition-colors font-medium">
+                  <Mail className="w-3 h-3 shrink-0" /> support@smarttrip.com
+                </a>
+              </li>
+              <li>
+                <Link to="/privacy" className="text-xs text-gray-500 hover:text-brand-600 transition-colors font-medium">
+                  Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link to="/terms" className="text-xs text-gray-500 hover:text-brand-600 transition-colors font-medium">
+                  Terms of Service
+                </Link>
               </li>
             </ul>
           </div>
         </div>
 
-        <div className="border-t border-theme-border pt-4 flex flex-col md:flex-row items-center justify-between gap-2">
-          <p className="text-muted text-[10px] font-bold uppercase tracking-wider">
-            &copy; {new Date().getFullYear()} SmartTrip. All rights reserved.
+        {/* Bottom bar */}
+        <div className="mt-8 pt-6 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-2">
+          <p className="text-[11px] text-gray-400">
+            © {new Date().getFullYear()} SmartTrip. All rights reserved.
           </p>
-          <div className="flex gap-4">
-            <span className="text-muted text-[10px] font-bold uppercase tracking-wider">Made with ❤️ for Travelers</span>
-          </div>
+          <p className="text-[11px] text-gray-400">
+            Made with ❤️ for travelers worldwide
+          </p>
         </div>
       </div>
     </footer>
- );
+  );
 }

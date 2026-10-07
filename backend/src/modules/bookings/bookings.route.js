@@ -8,7 +8,10 @@ const router = express.Router();
 router.use(authenticate);
 
 router.post('/', bookingController.createBooking);
+router.post('/hotel', bookingController.createHotelBooking);
+router.post('/package', bookingController.createPackageBooking);
 router.get('/', bookingController.getUserBookings);
+router.patch('/:id/cancel', bookingController.cancelBooking);
 router.get('/:id', bookingController.getBookingDetails);
 
 export default router;

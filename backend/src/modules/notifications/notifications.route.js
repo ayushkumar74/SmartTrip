@@ -6,6 +6,8 @@ const router = express.Router();
 
 router.use(authenticate);
 router.get('/', notificationController.getUserNotifications);
+router.get('/unread-count', notificationController.getUnreadCount);
+router.patch('/read-all', notificationController.markAllRead);
 router.patch('/:id/read', notificationController.markRead);
 
 export default router;

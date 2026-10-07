@@ -1,0 +1,9 @@
+Package Details — PASS
+Navigate to Review — PASS
+Traveler form — PASS
+UI travel-date selection — PASS
+Actual browser payment flow — PASS
+Confirmation — PASS
+Package Booking Details — PASS
+Refresh — PASS
+Browser Back — PASS

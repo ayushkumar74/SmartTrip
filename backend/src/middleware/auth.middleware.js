@@ -36,6 +36,22 @@ export const authenticate = async (req, res, next) => {
   }
 };
 
+/** Attach an authenticated user when a valid session is present, without
+ * changing the public contract of search endpoints for anonymous users. */
+export const optionalAuthenticate = async (req, res, next) => {
+  try {
+    const token = req.cookies.jwt;
+    if (!token) return next();
+
+    const decoded = jwt.verify(token, env.JWT_SECRET);
+    const user = await prisma.user.findUnique({ where: { id: decoded.id } });
+    if (user?.isActive) req.user = user;
+  } catch {
+    // Public search remains available when an optional session is invalid.
+  }
+  return next();
+};
+
 /**
  * Middleware to restrict access based on roles
  * @param {String[]} roles - Array of allowed roles
